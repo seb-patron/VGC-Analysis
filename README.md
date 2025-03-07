@@ -9,10 +9,13 @@ VGC-Spark/
 ├── data/                  # Data directory (not tracked by git)
 │   ├── replays/           # Downloaded battle replays
 │   └── ladder/            # Ladder rankings data
+├── docs/                  # Documentation
+│   └── data_storage_options.md  # Detailed info on data storage options
 ├── src/                   # Source code
 │   └── python/            # Python scripts
 │       ├── extract_replays.py        # Script to download battle replays
-│       └── extract_ladder_rankings.py # Script to download ladder rankings
+│       ├── extract_ladder_rankings.py # Script to download ladder rankings
+│       └── download_data.py          # Script to download data from various sources
 ├── Dockerfile             # Docker configuration
 ├── start-spark-notebook.sh # Script to start Jupyter notebook with Spark
 └── README.md              # Project documentation
@@ -55,17 +58,47 @@ python src/python/extract_replays.py --direction older
 
 ## Data Management
 
-The `data/` directory is not tracked by git due to its potentially large size. Here are some options for managing this data:
+The `data/` directory is not tracked by git due to its potentially large size. We provide several options for managing this data:
 
-1. **Local Storage Only**: Keep the data locally and don't share it (current approach)
-2. **Shared Network Drive**: Store the data on a shared network drive that all team members can access
-3. **Cloud Storage**: Use a service like AWS S3, Google Cloud Storage, or Azure Blob Storage
-4. **Data Version Control**: Use a tool like DVC (Data Version Control) to track data separately from code
-5. **Compressed Archives**: Create compressed archives of important data subsets that can be shared
+### Option 1: Using the Download Script
 
-### Setting Up DVC (Data Version Control)
+We've included a versatile script that can download data from various sources:
 
-If you choose to use DVC, here's how to set it up:
+```bash
+# Download using DVC (default)
+python src/python/download_data.py
+
+# Download from Hugging Face
+python src/python/download_data.py --source huggingface --dataset username/vgc-battle-data
+
+# Download from Kaggle
+python src/python/download_data.py --source kaggle --dataset username/pokemon-vgc-battle-data
+
+# Download from Google Drive
+python src/python/download_data.py --source gdrive --folder-id your-folder-id
+
+# Download from GitHub Releases
+python src/python/download_data.py --source github --repo username/repo --tag v1.0.0-data --asset vgc-data.tar.gz
+
+# Download from Internet Archive
+python src/python/download_data.py --source archive --identifier pokemon-vgc-battle-data
+```
+
+### Option 2: Data Storage Solutions
+
+We support several free data storage solutions:
+
+1. **Hugging Face Datasets**: Excellent for ML projects with good versioning
+2. **Kaggle Datasets**: Up to 20GB free storage with version control
+3. **Google Drive**: 15GB free storage with easy sharing
+4. **GitHub Releases**: For datasets under 2GB
+5. **Internet Archive**: Free unlimited storage
+
+For detailed setup instructions for each option, see [Data Storage Options](docs/data_storage_options.md).
+
+### Option 3: Data Version Control (DVC)
+
+DVC is recommended for tracking data alongside your code:
 
 ```bash
 # Install DVC
@@ -77,11 +110,25 @@ dvc init
 # Add data directory to DVC
 dvc add data
 
-# Configure remote storage (example with S3)
-dvc remote add -d myremote s3://mybucket/path/to/data
+# Configure remote storage (example with Google Drive)
+dvc remote add -d myremote gdrive://folder_id
 
 # Push data to remote
 dvc push
+```
+
+To pull data on another machine:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/VGC-Spark.git
+cd VGC-Spark
+
+# Install DVC
+pip install dvc
+
+# Pull data
+dvc pull
 ```
 
 ## Formats

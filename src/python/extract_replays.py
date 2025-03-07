@@ -24,8 +24,8 @@ DEFAULT_FORMATS = [
     "gen9randombattle"
 ]
 
-# Maximum number of pages to fetch (safety to avoid infinite loop)
-MAX_PAGES = 55
+# Default maximum number of pages to fetch (safety to avoid infinite loop)
+DEFAULT_MAX_PAGES = 55
 
 def fetch_replay_page(format_id: str, before_ts: Optional[int] = None) -> List[Dict[str, Any]]:
     """
@@ -72,12 +72,25 @@ def find_oldest_timestamp(format_id: str) -> Optional[int]:
     """
     Find the oldest timestamp in a format's replays.
     
+    First checks if the oldest timestamp is stored in state.json.
+    If not found there, scans the replay directories to find it.
+    
     Args:
         format_id: The format ID to search for (e.g., 'gen9vgc2024regh')
         
     Returns:
         The oldest timestamp found, or None if no replays exist
     """
+    # First check if we have the oldest timestamp in state.json
+    state = load_state()
+    oldest_key = f"{format_id}_oldest"
+    if oldest_key in state:
+        print(f"Found oldest timestamp for {format_id} in state.json: {state[oldest_key]}")
+        return state[oldest_key]
+    
+    # If not in state.json, scan directories
+    print(f"No oldest timestamp found in state.json for {format_id}, scanning directories...")
+    
     format_dir = os.path.join(REPLAYS_DIR, format_id)
     if not os.path.exists(format_dir):
         return None
@@ -159,13 +172,14 @@ def download_replay(replay_id: str, format_id: str, replay_date: str) -> bool:
     print(f"Saved replay to {fname}")
     return True
 
-def extract_replays(formats: List[str] = DEFAULT_FORMATS, direction: str = 'newer') -> Dict[str, int]:
+def extract_replays(formats: List[str] = DEFAULT_FORMATS, direction: str = 'newer', max_pages: int = DEFAULT_MAX_PAGES) -> Dict[str, int]:
     """
     Extract replays for the specified formats and direction.
     
     Args:
         formats: List of format IDs to extract replays for
         direction: 'newer' to get replays newer than last seen, 'older' to get replays older than oldest seen
+        max_pages: Maximum number of pages to fetch per format (safety to avoid infinite loop)
         
     Returns:
         Dictionary with statistics about the extraction
@@ -203,7 +217,7 @@ def extract_replays(formats: List[str] = DEFAULT_FORMATS, direction: str = 'newe
         replay_dates = {}  # Dictionary to store replay ID -> date mapping
         done = False
 
-        while page < MAX_PAGES and not done:
+        while page < max_pages and not done:
             try:
                 data = fetch_replay_page(fmt, before_ts)
                 # API returns a list directly, not a dictionary with a 'replays' key
@@ -282,9 +296,11 @@ def main():
                         help='Download direction: "newer" gets replays newer than last seen, "older" gets replays older than oldest seen')
     parser.add_argument('--formats', nargs='+', default=DEFAULT_FORMATS,
                         help=f'List of formats to download replays for. Default: {DEFAULT_FORMATS}')
+    parser.add_argument('--max-pages', type=int, default=DEFAULT_MAX_PAGES,
+                        help=f'Maximum number of pages to fetch per format. Default: {DEFAULT_MAX_PAGES}')
     args = parser.parse_args()
     
-    stats = extract_replays(formats=args.formats, direction=args.direction)
+    stats = extract_replays(formats=args.formats, direction=args.direction, max_pages=args.max_pages)
     
     print("\nExtraction complete!")
     print(f"Formats processed: {stats['formats_processed']}")

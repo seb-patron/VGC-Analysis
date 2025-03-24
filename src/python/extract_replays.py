@@ -202,7 +202,7 @@ def download_replay(replay_id: str, format_id: str, replay_date: str) -> bool:
         True if successful, False otherwise
     """
     # Create format/date directory structure
-    format_dir = os.path.join(REPLAYS_DIR, format_id, replay_date)
+    format_dir = os.path.join(REPLAYS_DIR, format_id, 'raw', replay_date)
     os.makedirs(format_dir, exist_ok=True)
     
     rep_url = f"https://replay.pokemonshowdown.com/{replay_id}.json"
@@ -264,7 +264,8 @@ def batch_download_replays(replay_ids: List[str], format_id: str, replay_dates: 
     # Download replays by date
     for date, ids in by_date.items():
         # Create directory once per date
-        date_dir = os.path.join(REPLAYS_DIR, format_id, date)
+        # date_dir = os.path.join(REPLAYS_DIR, format_id, date)
+        date_dir = os.path.join(REPLAYS_DIR, format_id, 'raw', date)
         os.makedirs(date_dir, exist_ok=True)
         
         # Log progress periodically

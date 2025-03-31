@@ -65,6 +65,12 @@ The scripts currently track the following Pokémon battle formats:
 - `gen9vgc2025regg`: VGC 2025 Regulation G
 - `gen9randombattle`: Generation 9 Random Battle
 
+## Analysis Notebooks
+
+The project includes the following analysis notebooks:
+
+- [Highest Winrate Analysis](notebooks/analysis/highest-winrate.ipynb): Analysis of Pokémon with the highest win rates in VGC 2025 Regulation G format
+
 ## Contributing
 
 1. Fork the repository
